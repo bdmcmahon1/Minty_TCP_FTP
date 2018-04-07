@@ -52,7 +52,7 @@ class ProcessReads:
                         print 'File transfer complete'
                     else:
                         print 'File not found, notifying client and closing connection...'
-                        sock.send('File not found, closing connection...')
+                        sock.send('ERR@File not found@')
                         sock.close()
                         readSocks.remove(sock)
                 elif clientData[:3] == "PUT":
