@@ -47,15 +47,19 @@ class client:
 			print '%s sending request "%s"' % (self.name,message)
 			self.sock.send(message)
 		self.state = 2
-	def recieve_fileinfo(self):
-		self.fileInfo.append(self.sock.recv(1024))
+	def recieve_fileinfo(self):			
+		self.fileInfo.append(self.recv(buf_size))
 		if '@' in self.fileInfo:
 			atIndex = self.fileInfo.find('@')
-			self.filesize = fileInfo[:atIndex]
-			#add anythin extra as start of read data
-			print '%s: file size recieved (%d)' % (self.name,self.filesize)
-			client.readData.append(fileInfo[(atIndex+1):])
-			self.state = 3
+			data = fileInfo[:atIndex]
+			if data == 'FNF':
+				print '%s: File Not found - closing client' % self.name
+				self.state = 0
+			else:
+				self.fileSize = fileInfo[:atIndex]
+				#add anythin extra as start of read data
+				client.readData.append(fileInfo[(atindex+1):])
+				self.state = 3
 	def recieve_data(self):
 		currentRead = self.sock.recv(1024)
 		print '%s: Data Recieved (%s)' % (self.name,currentread)
