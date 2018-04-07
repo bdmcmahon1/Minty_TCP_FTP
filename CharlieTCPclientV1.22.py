@@ -39,24 +39,29 @@ class client:
 	def send_req(self):
 		if (self.action == "GET"):
 			message = "GET@%s@" % self.filename
+			print '%s sending request "%s"' % (self.name,message)
 			self.sock.send(message)
 		if (self.action == "PUT"):
 			self.filesize = os.stat(filename).st_size
 			message = "PUT@%s@%s:" % (self.filename,self.filesize)
+			print '%s sending request "%s"' % (self.name,message)
 			self.sock.send(message)
 		self.state = 2
 	def recieve_fileinfo(self):
-		self.fileInfo.append(self.sock.recv(buf_size))
+		self.fileInfo.append(self.sock.recv(1024))
 		if '@' in self.fileInfo:
 			atIndex = self.fileInfo.find('@')
-			self.fileSize = fileInfo[:atIndex]
+			self.filesize = fileInfo[:atIndex]
 			#add anythin extra as start of read data
-			client.readData.append(fileInfo[(atindex+1):])
+			print '%s: file size recieved (%d)' % (self.name,self.filesize)
+			client.readData.append(fileInfo[(atIndex+1):])
 			self.state = 3
 	def recieve_data(self):
 		currentRead = self.sock.recv(1024)
+		print '%s: Data Recieved (%s)' % (self.name,currentread)
 		self.readData.append(currentRead)
 		if self.readData == self.filesize:
+			print '%s: EOF reached - Writing data to file' % self.name
 			fp=open(self.filename,"w+")
 			fp.write(self.readData)
 			fp.close
@@ -86,14 +91,7 @@ for client in client_list:
 	print '%s Created. Here are some properties' % client.name
 	pprint(vars(client))
 
-
-
-
-
-
-
-
-
+#SETUP COMPLETE - RUNNING CODE BELOW____________________________________
 
 while len(client_list):
 	#if state variable calls for it run inputs	
@@ -101,11 +99,10 @@ while len(client_list):
 	sockets_ready_reading,sockets_ready_writing,sockets_with_error = select.select(sockets_for_reading,sockets_for_writing,sockets_for_error)
 	
 	for client in client_list:
-		
+		print '%s: processing state %s' % (client.name,client.state)
 		#state 0 - ready fto close the client, all actions complete
 		if client.state == 0:
 			client.close_client()
-			client_list.remove(client)
 		
 		#state 1 - send requests
 		if client.state == 1:
@@ -124,4 +121,7 @@ while len(client_list):
 				
 
 print 'All clients complete - program closing'
+
+#open all the files and print them later?
+
 
