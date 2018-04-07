@@ -3,7 +3,7 @@ import select
 import os.path
 
 # Versions:
-# 1.2 - TCP Server with select - multiple clients - GET
+# 1.22 - TCP Server with select - multiple clients - GET
 
 # Globals
 client_messages = {} # Dictionary to hold (client_addresses, message buffer)
@@ -62,9 +62,11 @@ class ProcessReads:
                                 del client_messages[clientAddress]
                             else:
                                 print 'File not found, notifying client and closing connection...'
-                                sock.send('ERR@File not found@')
+                                sock.send('FNF@')
                                 sock.close()
                                 readSocks.remove(sock)
+                                # Remove client message
+                                del client_messages[clientAddress]
                 elif clientData[:3] == "PUT":
                     print 'PUT request received, parsing filename...'
                 else:
