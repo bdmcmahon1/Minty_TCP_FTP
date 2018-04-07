@@ -63,7 +63,7 @@ class ProcessReads:
                             else:
                                 print 'File not found, notifying client and closing connection...'
                                 sock.send('FNF@')
-                                sock.close()
+                                #sock.close()
                                 readSocks.remove(sock)
                                 # Remove client message
                                 del client_messages[clientAddress]

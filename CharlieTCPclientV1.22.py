@@ -30,11 +30,11 @@ class client:
 		sock.setblocking(0)
 		sock.connect_ex(saddr)
 		self.filename = filename
-		self.readData=[]
+		self.readData=""
 		self.action = action
 		self.saddr = saddr
 		self.filesize = 0
-		self.fileInfo = []
+		self.fileInfo = ""
 		
 	def send_req(self):
 		if (self.action == "GET"):
@@ -48,25 +48,30 @@ class client:
 			self.sock.send(message)
 		self.state = 2
 	def recieve_fileinfo(self):			
-		self.fileInfo.append(self.recv(buf_size))
+		#self.fileInfo.append(self.sock.recv(buf_size))
+		self.fileInfo = self.fileInfo + self.sock.recv(buf_size)
 		if '@' in self.fileInfo:
 			atIndex = self.fileInfo.find('@')
-			data = fileInfo[:atIndex]
+			data = self.fileInfo[:atIndex]
 			if data == 'FNF':
 				print '%s: File Not found - closing client' % self.name
 				self.state = 0
+				#sockets_for_reading.remove(self.sock)
 			else:
-				self.fileSize = fileInfo[:atIndex]
+				self.filesize = self.fileInfo[:atIndex]
 				#add anythin extra as start of read data
-				client.readData.append(fileInfo[(atindex+1):])
+				#client.readData.append(fileInfo[(atindex+1):])
+				client.readData = client.readData + self.fileInfo[(atIndex+1):]
 				self.state = 3
 	def recieve_data(self):
 		currentRead = self.sock.recv(1024)
-		print '%s: Data Recieved (%s)' % (self.name,currentread)
-		self.readData.append(currentRead)
-		if self.readData == self.filesize:
+		print '%s: Data Recieved (%s)' % (self.name,currentRead)
+		#self.readData.append(currentRead)
+		self.readData = self.readData + currentRead
+		if str(len(self.readData)) == self.filesize:
 			print '%s: EOF reached - Writing data to file' % self.name
-			fp=open(self.filename,"w+")
+			fileout = 'C:\\' + self.name + 'OUT.txt'
+			fp=open(fileout,"w+")
 			fp.write(self.readData)
 			fp.close
 			self.state = 0
@@ -74,10 +79,13 @@ class client:
 		print '%s finished. Closing Connection.' % self.name
 		self.sock.close()
 		client_list.remove(self)
+		sockets_for_reading.remove(self.sock)
+		sockets_for_writing.remove(self.sock)
+		sockets_for_error.remove(self.sock)
 #create multiple clients
-client_1 = client(saddr,'client_1','testGET1.py',"GET")
-client_2 = client(saddr,'client_2','testGET2.py',"GET")
-client_3 = client(saddr,'client_3','testGET3.py',"GET")
+client_1 = client(saddr,'client_1','C:\\filename.txt',"GET")
+client_2 = client(saddr,'client_2','C:\\filename.txt',"GET")
+client_3 = client(saddr,'client_3','C:\\filename.txt',"GET")
 
 client_list = [client_1,client_2,client_3]
 
