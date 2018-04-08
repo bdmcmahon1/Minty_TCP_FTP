@@ -52,8 +52,16 @@ class client:
 		self.saddr = saddr
 		self.filesize = 0
 		self.fileInfo = ""
-		self.fileData = ""
-		
+		self.fileBuffer = ""
+		if self.action == "PUT":
+			fp=open(self.filename,"r")
+			self.fileData = fp.read()
+			fp.close()
+		else:
+			self.fileData = ""
+		self.send_win_low = 0
+		self.send_win_high = 1
+			
 	def send_req(self):
 		if (self.action == "GET"):
 			message = "GET@%s@" % self.filename
@@ -61,14 +69,13 @@ class client:
 			self.sock.send(message)
 			self.state = 2
 		if (self.action == "PUT"):
-			self.filesize = os.stat(filename).st_size
+			self.filesize = os.stat(self.filename).st_size
 			message = "PUT@%s@%s@" % (self.filename,self.filesize)
 			print '%s sending request "%s"' % (self.name,message)
 			self.sock.send(message)
 			self.state = 4
 			
 	def recieve_fileinfo(self):			
-		#self.fileInfo.append(self.sock.recv(buf_size))
 		self.fileInfo = self.fileInfo + self.sock.recv(buf_size)
 		if self.action == "GET":
 			if '@' in self.fileInfo:
@@ -113,10 +120,20 @@ class client:
 		sockets_for_error.remove(self.sock)
 		
 	def send_data(self):
-		fp=open(self.filename,"w+")
-		self.fileData = fp.read
-		fp.close
-		self.sock.send(self.fileData)
+		message = self.fileData[1024*self.send_win_low:1024*self.send_win_high]
+		
+		if len(message):
+			self.sock.send(message)
+			self.send_win_low = self.send_win_low + 1
+			self.send_win_high = self.send_win_high + 1
+			print '%s: Sent Data (%s)' % (self.name,message)
+			return
+		else:
+			print '%s: Entire Message Sent - Ready to close' % self.name
+			self.state = 0
+		
+		
+	
 #_______________________________________________________________________	
 		
 #Client Creation________________________________________________________
