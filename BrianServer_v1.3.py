@@ -120,8 +120,8 @@ tcpSock.bind((serverHost, serverPort))
 print 'TCP Echo Server starting up on port 10000...'
 
 # Set the TCP socket to listen for incoming connections
-# Max 1 simultaneous
-tcpSock.listen(1)
+# Max 5 simultaneous
+tcpSock.listen(5)
 
 # Sockets which we expect to read from
 readSocks = [ tcpSock ]
