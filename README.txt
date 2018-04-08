@@ -1,9 +1,12 @@
 Readme for TCP Protocol Project
 	Charlie Sullivan
-	Brian Mcmahon
+	Brian McMahon
 	Networking
 	
-NOTE - PROJECT NOT COMPLETED____________________________________________
+NOTE - 
+
+1) PROJECT NOT COMPLETED____________________________________________
+2) Not fully tested through Stammering Proxy
 
 The project is not currently completed. Here is a summary of what we 
 have completed and our plan going forward.
@@ -19,8 +22,11 @@ Completed:
 		
 	Brian:
 		Server:
-		
-		Client
+			Handles multiple clients.
+			GET and PUT working, when clients send either GET or PUT requests (not both) simultaneously.
+				Server unable to process simultaneous client requests where both GET and PUT requests are being sent.
+		Client:
+			None.
 
 Plan moving forward:
 	Charlie:
@@ -34,6 +40,11 @@ Plan moving forward:
 			The client has provided me a good framework for the server
 			and I think I can have something up and running soon.
 	Brian:
+		Client:
+			Incomplete
+		Server:
+			Needs functionality for simultaneous GET and PUT requests. All other functionality present.
+			Needs further testing with stammering proxy.
 	
 
 ________________________________________________________________________	
@@ -48,9 +59,7 @@ Current working files (as long as clients PUt or GET exclusively):
 	
 How to test code:
 	Server:
-		In one shell call up the server
-
-			(fill in later)
+		The server only needs to be started, at which point our TCP FTP service will run on port 10000.
 	
 	Client:
 		To do different things changes must be made to the client code as of
@@ -89,7 +98,12 @@ Protocol:
 		
 		Once the request was set the client would start sending data 
 		from the file. The server could then figure out when the file 
-		was done based on the file size in the request
+		was done based on the file size in the request.
+		
+		Server:
+		
+		The server will add the client address as a prefix to the filename when saving it on the server.
+			E.g. 56879filename.txt
 		
 	
 		
