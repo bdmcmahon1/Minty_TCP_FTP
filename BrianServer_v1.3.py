@@ -85,9 +85,9 @@ class ProcessReads:
                             # Remove client message
                             del client_messages[clientAddress]
                             # Instantiate Client Data
-                            client_data[clientAddress] = (strFileName,strFileSize)
+                            client_data[clientAddress] = (str(clientAddress[1]) + strFileName,strFileSize)
                             # Write initial file
-                            clientFile = open(strFileName, 'w')
+                            clientFile = open(str(clientAddress[1]) + strFileName, 'w')
                             clientFile.write("")
                             clientFile.close()
                         else:
