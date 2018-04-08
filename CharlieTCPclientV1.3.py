@@ -35,34 +35,44 @@ class client:
 		self.saddr = saddr
 		self.filesize = 0
 		self.fileInfo = ""
+		self.fileData = ""
 		
 	def send_req(self):
 		if (self.action == "GET"):
 			message = "GET@%s@" % self.filename
 			print '%s sending request "%s"' % (self.name,message)
 			self.sock.send(message)
+			self.state = 2
 		if (self.action == "PUT"):
 			self.filesize = os.stat(filename).st_size
-			message = "PUT@%s@%s:" % (self.filename,self.filesize)
+			message = "PUT@%s@%s@" % (self.filename,self.filesize)
 			print '%s sending request "%s"' % (self.name,message)
 			self.sock.send(message)
-		self.state = 2
+			self.state = 4
 	def recieve_fileinfo(self):			
 		#self.fileInfo.append(self.sock.recv(buf_size))
 		self.fileInfo = self.fileInfo + self.sock.recv(buf_size)
-		if '@' in self.fileInfo:
-			atIndex = self.fileInfo.find('@')
-			data = self.fileInfo[:atIndex]
-			if data == 'FNF':
-				print '%s: File Not found - closing client' % self.name
-				self.state = 0
-				#sockets_for_reading.remove(self.sock)
-			else:
-				self.filesize = self.fileInfo[:atIndex]
-				#add anythin extra as start of read data
-				#client.readData.append(fileInfo[(atindex+1):])
-				client.readData = client.readData + self.fileInfo[(atIndex+1):]
-				self.state = 3
+		if self.action == "GET":
+			if '@' in self.fileInfo:
+				atIndex = self.fileInfo.find('@')
+				data = self.fileInfo[:atIndex]
+				if data == 'FNF':
+					print '%s: File Not found - closing client' % self.name
+					self.state = 0
+					#sockets_for_reading.remove(self.sock)
+				else:
+					self.filesize = self.fileInfo[:atIndex]
+					#add anythin extra as start of read data
+					#client.readData.append(fileInfo[(atindex+1):])
+					client.readData = client.readData + self.fileInfo[(atIndex+1):]
+					self.state = 3
+		if self.action == "PUT":
+			atIndex = self.fileInfo.find('@',4)
+			if atIndex>0:
+				fileACK = self.fileInfo[4:atIndex]
+				if fileACK == self.filename:
+					print '%s: Server recieved file' % self.name
+					self.state = 0		
 	def recieve_data(self):
 		currentRead = self.sock.recv(1024)
 		print '%s: Data Recieved (%s)' % (self.name,currentRead)
@@ -77,15 +87,25 @@ class client:
 			self.state = 0
 	def close_client(self):
 		print '%s finished. Closing Connection.' % self.name
+		#send ack to server that I got the entire file
+		if self.action == "GET":
+			self.sock.send('ACK@%s') % self.filename
 		self.sock.close()
 		client_list.remove(self)
 		sockets_for_reading.remove(self.sock)
 		sockets_for_writing.remove(self.sock)
 		sockets_for_error.remove(self.sock)
+	def send_data(self):
+		fp=open(self.filename,"w+")
+		self.fileData = fp.read
+		fp.close
+		self.sock.send(self.fileData)
+		
+		
 #create multiple clients
-client_1 = client(saddr,'client_1','declaration.txt',"GET")
+client_1 = client(saddr,'client_1','declaration.txt',"PUT")
 client_2 = client(saddr,'client_2','declaration.txt',"GET")
-client_3 = client(saddr,'client_3','declaration.txt',"GET")
+client_3 = client(saddr,'client_3','declaration.txt',"PUT")
 
 client_list = [client_1,client_2,client_3]
 
@@ -121,15 +141,20 @@ while len(client_list):
 			if client.sock in sockets_ready_writing:
 				client.send_req()
 
-		#state 2 - recieve file size
+		#state 2 - recieve file information
 		if client.state == 2:
 			if client.sock in sockets_ready_reading:
 				client.recieve_fileinfo()
 		
-		#state 3 - recieve data
+		#state 3 - recieve data (GET)
 		if client.state == 3:
 			if client.sock in sockets_ready_reading:
 				client.recieve_data()
+		
+		#state 4 - send Data (PUT)
+		if client.state == 4:
+			if client.sock in sockets_ready_writing:
+				client.send_data()
 				
 
 print 'All clients complete - program closing'
