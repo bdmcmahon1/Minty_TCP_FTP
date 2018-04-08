@@ -68,7 +68,8 @@ class ProcessReads:
                                 readSocks.remove(sock)
                                 # Remove client message
                                 del client_messages[clientAddress]
-                        elif clientData[:3] == "PUT":
+                    else:
+                        if clientData[:3] == "PUT":
                             print 'PUT request received, parsing filename...'
                             strParseFile = clientData[4:]
                             arrPUT = strParseFile.split('@')
@@ -80,6 +81,9 @@ class ProcessReads:
                                 elif intCount == 2:
                                     strFileSize = putPart
                                     intCount = intCount + 1
+                                elif intCount == 3:
+                                    strData = putPart
+                                    intCount = intCount + 1
                                 else:
                                     continue
                             # Remove client message
@@ -88,7 +92,7 @@ class ProcessReads:
                             client_data[clientAddress] = (str(clientAddress[1]) + strFileName,strFileSize)
                             # Write initial file
                             clientFile = open(str(clientAddress[1]) + strFileName, 'w')
-                            clientFile.write("")
+                            clientFile.write(strData)
                             clientFile.close()
                         else:
                             print 'Processing client data...'
