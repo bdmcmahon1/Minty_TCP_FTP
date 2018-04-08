@@ -100,7 +100,7 @@ class ProcessReads:
                                 clientFile = open(clientFileName, 'w+r')
                                 if len(clientFile) < clientFileSize:
                                     clientFile.write(clientData)
-                                elif len(clientFile) < clientFileSize:
+                                elif len(clientFile) == clientFileSize:
                                     print 'File transfer complete'
                                 clientFile.close()
             else:   # Empty buffer from connected readable client socket means closed connection
