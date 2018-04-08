@@ -35,12 +35,12 @@ saddr = ('localhost',10000)
 client_list = []
 #_______________________________________________________________________
 
-#Define Client Class____________________________________________________
+#Define Client Class____________________________________________________COMMENTS ON CODE OPERATION__________________________________
 class client:
 	global client_list
 	
 	def __init__(self,saddr,client_name,filename,action):
-		self.state = 1
+		self.state = 1													#list of state meanings in main program loop
 		self.name = client_name
 		print "Binding %s to Socket" % self.name
 		self.sock = sock = socket.socket(socket.AF_INET,socket.SOCK_STREAM)
@@ -48,19 +48,18 @@ class client:
 		sock.connect_ex(saddr)
 		self.filename = filename
 		self.readData=""
-		self.action = action
+		self.action = action											#so we know if client is getting or putting
 		self.saddr = saddr
 		self.filesize = 0
 		self.fileInfo = ""
-		self.fileBuffer = ""
-		if self.action == "PUT":
+		if self.action == "PUT":										#if putting a file, open it and store contents to send later
 			fp=open(self.filename,"r")
 			self.fileData = fp.read()
 			fp.close()
 		else:
-			self.fileData = ""
-		self.send_win_low = 0
-		self.send_win_high = 1
+			self.fileData = ""											#if getting a file empty string to be poopulated later
+		self.send_win_low = 0											#variables used when sending windows of 1024 bytes for putting a file
+		self.send_win_high = 1											#use is clear in the send_data() function of the client class
 			
 	def send_req(self):
 		if (self.action == "GET"):
@@ -75,21 +74,21 @@ class client:
 			self.sock.send(message)
 			self.state = 4
 			
-	def recieve_fileinfo(self):			
-		self.fileInfo = self.fileInfo + self.sock.recv(buf_size)
-		if self.action == "GET":
-			if '@' in self.fileInfo:
+	def recieve_fileinfo(self):											#fileInfo is meta information about the file itsself, not what is in it
+		self.fileInfo = self.fileInfo + self.sock.recv(1024)
+		if self.action == "GET":										#if getting a file the client will get back FNF(file not found)
+			if '@' in self.fileInfo:									#or the size of the file so it knows when the transfer is complete
 				atIndex = self.fileInfo.find('@')
 				data = self.fileInfo[:atIndex]
 				if data == 'FNF':
 					print '%s: File Not Found' % self.name
 					self.state = 0
-				else:
-					self.filesize = self.fileInfo[:atIndex]
+				else:													#if file present store file size and save any data that may have been
+					self.filesize = self.fileInfo[:atIndex]				#sent so you dont lose it
 					client.readData = client.readData + self.fileInfo[(atIndex+1):]
 					self.state = 3
-		if self.action == "PUT":
-			atIndex = self.fileInfo.find('@',4)
+		if self.action == "PUT":										#if putting a file ideally the server will send an ACK back when the 
+			atIndex = self.fileInfo.find('@',4)							#entire file transfer is complete
 			if atIndex>0:
 				fileACK = self.fileInfo[4:atIndex]
 				if fileACK == self.filename:
@@ -100,7 +99,7 @@ class client:
 		currentRead = self.sock.recv(1024)
 		print '%s: Data Recieved (%s)' % (self.name,currentRead)
 		self.readData = self.readData + currentRead
-		if str(len(self.readData)) == self.filesize:
+		if str(len(self.readData)) == self.filesize:					#once the end of file has been reached store data into a file
 			print '%s: EOF reached - Writing data to file' % self.name
 			fileout = self.name + 'OUT.txt'
 			fp=open(fileout,"w+")
@@ -111,20 +110,20 @@ class client:
 	def close_client(self):
 		print '%s finished. Closing Connection.' % self.name
 		#send ack to server that I got the entire file
-		if self.action == "GET":
-			self.sock.send('ACK@%s') % self.filename
-		self.sock.close()
-		client_list.remove(self)
+		#if self.action == "GET":										#Send ACK to server that entire file was recieved
+		#	self.sock.send('ACK@%s') % self.filename
+		self.sock.close()												#close the client and remove it from all lists so nothing calls on
+		client_list.remove(self)										#a dead client again
 		sockets_for_reading.remove(self.sock)
 		sockets_for_writing.remove(self.sock)
 		sockets_for_error.remove(self.sock)
 		
 	def send_data(self):
 		message = self.fileData[1024*self.send_win_low:1024*self.send_win_high]
-		
-		if len(message):
-			self.sock.send(message)
-			self.send_win_low = self.send_win_low + 1
+																		#here is where win_high/low happen. Each pass through this state only
+		if len(message):												#send 1024 bytes out at a time. This allows us to make sure the buffer
+			self.sock.send(message)										#has room and have all clients operate rather than waiting for 
+			self.send_win_low = self.send_win_low + 1					#one to finish before moving to next client
 			self.send_win_high = self.send_win_high + 1
 			print '%s: Sent Data (%s)' % (self.name,message)
 			return
@@ -138,7 +137,7 @@ class client:
 		
 #Client Creation________________________________________________________
 client_1 = client(saddr,'client_1','declaration.txt',"PUT")
-client_2 = client(saddr,'client_2','declaration.txt',"PUT")
+client_2 = client(saddr,'client_2','declaration.txt',"GET")
 client_3 = client(saddr,'client_3','declaration.txt',"PUT")
 client_list = [client_1,client_2,client_3]
 #_______________________________________________________________________
@@ -154,7 +153,7 @@ for client in client_list:
 	sockets_for_error.append(client.sock)
 #_______________________________________________________________________	
 
-#Print client for user for debugging____________________________________	
+#Print client information for debugging_________________________________	
 	print '%s Created. Here are some properties' % client.name
 	pprint(vars(client))
 #_______________________________________________________________________
