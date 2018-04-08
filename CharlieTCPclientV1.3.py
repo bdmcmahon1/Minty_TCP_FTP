@@ -1,7 +1,30 @@
-#This test client will make a conecction with a server
+#This client will either GET a file from a server or put one on the Server
+#
+#Instructions:
+#	Example of client creation 	
+#		client_1 = client(saddr,'client_1','declaration.txt',"PUT")
+#	saddr 				- server address
+#	'client_1' 			- name of client, named numerically for ease of 
+#							debugging
+#	'declaration.txt' 	- name of file you wish to GET or PUT
+#	"PUT" 				- operation you wish to preform 
+#							GET - Pull file from server
+#							PUT - sotre local file on computer
+#
+#	Add Client:
+#		-To add a client copay and paste the example code in the Build 
+#		Clident section below and rename the object assignment to a unique 
+#		identifier. Fill in arguments as you see fi
+#
+#		-Add your client object name to the 'Client List' as well
+#			client_list = [client_1,client_2,client_3......]
+#	
+#	Remove Client:
+#		To remove simply delete the line of text creating the client 
+#		object and remove it from the Client List
+#_______________________________________________________________________
 
-#using python basic TCP tutorial from python.org
-
+#Define libraries and global variables__________________________________
 import socket
 import select
 import sys
@@ -9,16 +32,10 @@ import os
 from pprint import pprint
 
 saddr = ('localhost',10000)
-filename = ''
-state = 0
-#State values and meanings
-#0=program start or program end
-#1=recieve data (get)
-#2=send data (put)
 client_list = []
-buf_size = 1024
-message = 'this sucks butt'
+#_______________________________________________________________________
 
+#Define Client Class____________________________________________________
 class client:
 	global client_list
 	
@@ -49,6 +66,7 @@ class client:
 			print '%s sending request "%s"' % (self.name,message)
 			self.sock.send(message)
 			self.state = 4
+			
 	def recieve_fileinfo(self):			
 		#self.fileInfo.append(self.sock.recv(buf_size))
 		self.fileInfo = self.fileInfo + self.sock.recv(buf_size)
@@ -57,13 +75,10 @@ class client:
 				atIndex = self.fileInfo.find('@')
 				data = self.fileInfo[:atIndex]
 				if data == 'FNF':
-					print '%s: File Not found - closing client' % self.name
+					print '%s: File Not Found' % self.name
 					self.state = 0
-					#sockets_for_reading.remove(self.sock)
 				else:
 					self.filesize = self.fileInfo[:atIndex]
-					#add anythin extra as start of read data
-					#client.readData.append(fileInfo[(atindex+1):])
 					client.readData = client.readData + self.fileInfo[(atIndex+1):]
 					self.state = 3
 		if self.action == "PUT":
@@ -73,10 +88,10 @@ class client:
 				if fileACK == self.filename:
 					print '%s: Server recieved file' % self.name
 					self.state = 0		
+					
 	def recieve_data(self):
 		currentRead = self.sock.recv(1024)
 		print '%s: Data Recieved (%s)' % (self.name,currentRead)
-		#self.readData.append(currentRead)
 		self.readData = self.readData + currentRead
 		if str(len(self.readData)) == self.filesize:
 			print '%s: EOF reached - Writing data to file' % self.name
@@ -85,6 +100,7 @@ class client:
 			fp.write(self.readData)
 			fp.close
 			self.state = 0
+			
 	def close_client(self):
 		print '%s finished. Closing Connection.' % self.name
 		#send ack to server that I got the entire file
@@ -95,44 +111,47 @@ class client:
 		sockets_for_reading.remove(self.sock)
 		sockets_for_writing.remove(self.sock)
 		sockets_for_error.remove(self.sock)
+		
 	def send_data(self):
 		fp=open(self.filename,"w+")
 		self.fileData = fp.read
 		fp.close
 		self.sock.send(self.fileData)
+#_______________________________________________________________________	
 		
-		
-#create multiple clients
+#Client Creation________________________________________________________
 client_1 = client(saddr,'client_1','declaration.txt',"PUT")
 client_2 = client(saddr,'client_2','declaration.txt',"GET")
 client_3 = client(saddr,'client_3','declaration.txt',"PUT")
-
 client_list = [client_1,client_2,client_3]
+#_______________________________________________________________________
 
+#Prepare lists for select function______________________________________
 sockets_for_reading = []
 sockets_for_writing = []
 sockets_for_error = []
-
 
 for client in client_list:
 	sockets_for_reading.append(client.sock)
 	sockets_for_writing.append(client.sock)
 	sockets_for_error.append(client.sock)
-	
-	#print out the client state to make sure they have been created properly
+#_______________________________________________________________________	
+
+#Print client for user for debugging____________________________________	
 	print '%s Created. Here are some properties' % client.name
 	pprint(vars(client))
+#_______________________________________________________________________
 
-#SETUP COMPLETE - RUNNING CODE BELOW____________________________________
+#SETUP COMPLETE - Execute program_______________________________________
 
-while len(client_list):
-	#if state variable calls for it run inputs	
+while len(client_list):	
 	print 'calling select'
 	sockets_ready_reading,sockets_ready_writing,sockets_with_error = select.select(sockets_for_reading,sockets_for_writing,sockets_for_error)
 	
 	for client in client_list:
 		print '%s: processing state %s' % (client.name,client.state)
-		#state 0 - ready fto close the client, all actions complete
+		
+		#state 0 - All actions complete - close client
 		if client.state == 0:
 			client.close_client()
 		
@@ -156,6 +175,8 @@ while len(client_list):
 			if client.sock in sockets_ready_writing:
 				client.send_data()
 				
+#_______________________________________________________________________
+
 
 print 'All clients complete - program closing'
 
