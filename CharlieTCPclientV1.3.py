@@ -138,7 +138,7 @@ class client:
 		
 #Client Creation________________________________________________________
 client_1 = client(saddr,'client_1','declaration.txt',"PUT")
-client_2 = client(saddr,'client_2','declaration.txt',"GET")
+client_2 = client(saddr,'client_2','declaration.txt',"PUT")
 client_3 = client(saddr,'client_3','declaration.txt',"PUT")
 client_list = [client_1,client_2,client_3]
 #_______________________________________________________________________
