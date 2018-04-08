@@ -87,10 +87,12 @@ class ProcessReads:
                                 else:
                                     continue
                             # Remove client message
-                            del client_messages[clientAddress]
+                            client_messages[clientAddress] = ""
                             # Instantiate Client Data
+                            #client_data[clientAddress] = ('C:\\Users\\BMAC\\' + str(clientAddress[1]) + strFileName[3:],strFileSize)
                             client_data[clientAddress] = (str(clientAddress[1]) + strFileName,strFileSize)
                             # Write initial file
+                            #clientFile = open('C:\\Users\\BMAC\\' + str(clientAddress[1]) + strFileName[3:], 'w')
                             clientFile = open(str(clientAddress[1]) + strFileName, 'w')
                             clientFile.write(strData)
                             clientFile.close()
@@ -101,11 +103,11 @@ class ProcessReads:
                             if fileData:
                                 clientFileName = fileData[0]
                                 clientFileSize = fileData[1]
-                                clientFile = open(clientFileName, 'w+r')
-                                if len(clientFile) < clientFileSize:
-                                    clientFile.write(clientData)
-                                elif len(clientFile) == clientFileSize:
-                                    print 'File transfer complete'
+                                clientFile = open(clientFileName, 'a')
+                                #if len(clientFile) < clientFileSize:
+                                clientFile.write(clientData)
+                                #elif len(clientFile) == clientFileSize:
+                                    #print 'File transfer complete'
                                 clientFile.close()
             else:   # Empty buffer from connected readable client socket means closed connection
                 print 'Reading empty buffer from client, closing connection...'
