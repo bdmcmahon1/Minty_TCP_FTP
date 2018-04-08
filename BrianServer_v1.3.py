@@ -7,7 +7,7 @@ import os.path
 
 # Globals
 client_messages = {} # Dictionary to hold (client_addresses, message buffer)
-client_data = {}    # Dictionary for holding client data
+client_data = {}    # Dictionary for holding client file data
 
 # Class for processing readable sockets
 class ProcessReads:
@@ -85,10 +85,24 @@ class ProcessReads:
                             # Remove client message
                             del client_messages[clientAddress]
                             # Instantiate Client Data
-                            client_data[clientAddress] = ''
+                            client_data[clientAddress] = (strFileName,strFileSize)
+                            # Write initial file
+                            clientFile = open(strFileName, 'w')
+                            clientFile.write("")
+                            clientFile.close()
                         else:
-                            print 'not a GET or PUT request'
-                            # 
+                            print 'Processing client data...'
+                            # Get Client file Data
+                            fileData = client_data[clientAddress]
+                            if fileData:
+                                clientFileName = fileData[0]
+                                clientFileSize = fileData[1]
+                                clientFile = open(clientFileName, 'w+r')
+                                if len(clientFile) < clientFileSize:
+                                    clientFile.write(clientData)
+                                elif len(clientFile) < clientFileSize:
+                                    print 'File transfer complete'
+                                clientFile.close()
             else:   # Empty buffer from connected readable client socket means closed connection
                 print 'Reading empty buffer from client, closing connection...'
                 # Remove the socket from our expected readable sockets
